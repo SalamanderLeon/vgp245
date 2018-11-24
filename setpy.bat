@@ -1,1 +1,1 @@
-set path=%path%;C:\Program Files\Python37;C:\Program Files\Python37\Scripts
+set path=%path%;C:\Program Files\Python37\;C:\Program Files\Python37\Scripts
