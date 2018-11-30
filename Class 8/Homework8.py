@@ -1,9 +1,11 @@
 import pygame
-import time
+import random
+
 
 def text_object(text, font):
     text_surface = font.render(text, True, black)
     return text_surface, text_surface.get_rect()
+
 
 def message_display(text):
     global show_message
@@ -11,10 +13,11 @@ def message_display(text):
         return
     largeText = pygame.font.SysFont('times', 100)
     text_surf, text_rect = text_object(text, largeText)
-    text_rect.center = (display_width*0.5, display_height*0.5)
+    text_rect.center = (display_width * 0.5, display_height * 0.5)
 
     screen.blit(text_surf, text_rect)
     show_message = False
+
 
 def check_collision(player, obstacle):
     if not isinstance(player, Sprite):
@@ -22,13 +25,14 @@ def check_collision(player, obstacle):
     if not isinstance(obstacle, Sprite):
         raise ValueError("Cannot use check collision with non sprites for obstacle")
 
-    squared_summed_radii = (player.radius + obstacle.radius)**2
-    distance = (player.x - obstacle.x)**2 + (player.y - obstacle.y)**2
+    squared_summed_radii = (player.radius + obstacle.radius) ** 2
+    distance = (player.x - obstacle.x) ** 2 + (player.y - obstacle.y) ** 2
 
     if squared_summed_radii >= distance:
-        return  True
+        return True
     else:
         return False
+
 
 class Sprite:
     ''' A sprite object '''
@@ -46,10 +50,38 @@ class Sprite:
     def render(self, screen):
         screen.blit(self.img, (self.x, self.y))
 
+
+class Enemy(Sprite):
+    show = True
+
+    def update(self):
+        if self.show:
+            self.render(screen)
+
+
+class Player(Sprite):
+    direction = 'down'
+    bullet_direction = 'down'
+
     def shoot(self):
-        pass
+        blast = pygame.mixer.Sound('blast.wav')
+        blast.play()
+        self.bullet_direction = self.direction
+        bullet_sprite.x = player_sprite.x
+        bullet_sprite.y = player_sprite.y
+
+    def update(self):
+        if self.direction == 'down':
+            self.img = pygame.image.load("interceptor_down.png")
+        elif self.direction == 'up':
+            self.img = pygame.image.load("interceptor_up.png")
+        elif self.direction == 'right':
+            self.img = pygame.image.load("interceptor_right.png")
+        elif self.direction == 'left':
+            self.img = pygame.image.load("interceptor_left.png")
 
 
+# the game
 pygame.init()
 
 display_width = 800
@@ -62,7 +94,6 @@ pygame.display.set_caption("My Simple Pygame")
 blue = (0, 0, 255)
 white = (255, 255, 255)
 black = (0, 0, 0)
-# mario_img = pygame.image.load('mario_idle_01.png')
 
 y = display_height * 0.5
 x = display_width * 0.5
@@ -70,16 +101,25 @@ x = display_width * 0.5
 otherx = 50
 othery = 100
 
-player_sprite = Sprite(x, y, 16, 'interceptor_down.png')
-# mushroom_sprite = Sprite(otherx, othery, 16, 'mushroom.png')
+player_sprite = Player(x, y, 16, 'interceptor_down.png')
+bullet_sprite = Sprite(-50, -50, 16, 'bullet.png')
 
+
+enemy1 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
+enemy2 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
+enemy3 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
+enemy4 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
+enemy5 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
+
+enemies_group = enemy1, enemy2, enemy3, enemy4, enemy5
 
 is_running = True
 
 clock = pygame.time.Clock()
 
 show_message = True
-
+pygame.mixer.music.load('spark_man.wav')
+pygame.mixer.music.play(-1)
 # the game is running
 while is_running:
     for event in pygame.event.get():
@@ -88,40 +128,55 @@ while is_running:
 
     # input
     pressed_keys = pygame.key.get_pressed()
+    if pressed_keys[pygame.K_ESCAPE]:
+        is_running = False
+
     if pressed_keys[pygame.K_DOWN] or pressed_keys[pygame.K_s]:
         player_sprite.y += 5
-        player_sprite.img = pygame.image.load("interceptor_down.png")
+        player_sprite.direction = 'down'
     elif pressed_keys[pygame.K_UP] or pressed_keys[pygame.K_w]:
         player_sprite.y -= 5
-        player_sprite.img = pygame.image.load("interceptor_up.png")
+        player_sprite.direction = 'up'
 
     if pressed_keys[pygame.K_RIGHT]:
         player_sprite.x += 5
-        player_sprite.img = pygame.image.load("interceptor_right.png")
+        player_sprite.direction = 'right'
     elif pressed_keys[pygame.K_LEFT]:
         player_sprite.x -= 5
-        player_sprite.img = pygame.image.load("interceptor_left.png")
+        player_sprite.direction = 'left'
+
+    if player_sprite.bullet_direction == 'down':
+        bullet_sprite.y += 10
+    elif player_sprite.bullet_direction == 'up':
+        bullet_sprite.y -= 10
+    elif player_sprite.bullet_direction == 'right':
+        bullet_sprite.x += 10
+    elif player_sprite.bullet_direction == 'left':
+        bullet_sprite.x -= 10
+
+    player_sprite.update()
 
     if pressed_keys[pygame.K_SPACE]:
-        show_message = True
+        player_sprite.shoot()
 
     # bounds
     player_sprite.x = max(player_sprite.x, 0)
-    player_sprite.x = min(player_sprite.x, display_width - (player_sprite.radius*2))
+    player_sprite.x = min(player_sprite.x, display_width - (player_sprite.radius * 2))
     player_sprite.y = max(player_sprite.y, 0)
-    player_sprite.y = min(player_sprite.y, display_height - (player_sprite.radius*2))
+    player_sprite.y = min(player_sprite.y, display_height - (player_sprite.radius * 2))
 
-    # if check_collision(player_sprite, mushroom_sprite):
-        # show_message = True
-
+    for k in range(5):
+        if check_collision(bullet_sprite, enemies_group[k]):
+            enemies_group[k].show = False
 
     screen.fill(black)
-    #screen.blit(mario_img, (x, y))
+    bullet_sprite.render(screen)
     player_sprite.render(screen)
-    # mushroom_sprite.render(screen)
-
-
-    # pygame.draw.rect(screen, blue, obst_rect)
+    enemy1.update()
+    enemy2.update()
+    enemy3.update()
+    enemy4.update()
+    enemy5.update()
 
     message_display("On the top")
     pygame.display.update()
