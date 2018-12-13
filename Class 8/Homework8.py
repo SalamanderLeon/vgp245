@@ -3,17 +3,17 @@ import random
 
 
 def text_object(text, font):
-    text_surface = font.render(text, True, black)
+    text_surface = font.render(text, True, white)
     return text_surface, text_surface.get_rect()
 
 
-def message_display(text):
+def message_display(text, w = 0.5, h = 0.5):
     global show_message
     if not show_message:
         return
     largeText = pygame.font.SysFont('times', 100)
     text_surf, text_rect = text_object(text, largeText)
-    text_rect.center = (display_width * 0.5, display_height * 0.5)
+    text_rect.center = (display_width * w, display_height * h)
 
     screen.blit(text_surf, text_rect)
     show_message = False
@@ -35,7 +35,7 @@ def check_collision(player, obstacle):
 
 
 class Sprite:
-    ''' A sprite object '''
+    """ A sprite object """
     x = 0
     y = 0
     radius = 1
@@ -51,12 +51,28 @@ class Sprite:
         screen.blit(self.img, (self.x, self.y))
 
 
+enemies = 0
+
+
 class Enemy(Sprite):
+    def __init__(self, x, y, radius, img):
+        global enemies
+        self.x = x
+        self.y = y
+        self.radius = radius
+        self.img = pygame.image.load(img)
+        enemies += 1
+
     show = True
+    dead = 0
 
     def update(self):
+        global enemies
         if self.show:
             self.render(screen)
+        if self.dead == 0 and self.show is False:
+            enemies -= 1
+            self.dead = 1
 
 
 class Player(Sprite):
@@ -94,6 +110,7 @@ pygame.display.set_caption("My Simple Pygame")
 blue = (0, 0, 255)
 white = (255, 255, 255)
 black = (0, 0, 0)
+space = pygame.image.load("space.jpg")
 
 y = display_height * 0.5
 x = display_width * 0.5
@@ -170,6 +187,7 @@ while is_running:
             enemies_group[k].show = False
 
     screen.fill(black)
+    screen.blit(space, (0, 0))
     bullet_sprite.render(screen)
     player_sprite.render(screen)
     enemy1.update()
@@ -177,8 +195,9 @@ while is_running:
     enemy3.update()
     enemy4.update()
     enemy5.update()
-
-    message_display("On the top")
+    print(enemies)
+    if enemies == 0:
+        message_display("Winner!")
     pygame.display.update()
     clock.tick(60)
 
