@@ -7,16 +7,20 @@ def text_object(text, font):
     return text_surface, text_surface.get_rect()
 
 
-def message_display(text, w = 0.5, h = 0.5):
-    global show_message
-    if not show_message:
-        return
-    largeText = pygame.font.SysFont('times', 100)
-    text_surf, text_rect = text_object(text, largeText)
-    text_rect.center = (display_width * w, display_height * h)
+class Message:
 
-    screen.blit(text_surf, text_rect)
-    show_message = False
+    def __init__(self, show=False):
+        self.show_message = show
+
+    def message_display(self, text, w=0.5, h=0.5):
+        #if not self.show_message:
+        #    return
+        largeText = pygame.font.SysFont('times', 100)
+        text_surf, text_rect = text_object(text, largeText)
+        text_rect.center = (display_width * w, display_height * h)
+
+        screen.blit(text_surf, text_rect)
+        #self.show_message = False
 
 
 def check_collision(player, obstacle):
@@ -121,20 +125,23 @@ othery = 100
 player_sprite = Player(x, y, 16, 'interceptor_down.png')
 bullet_sprite = Sprite(-50, -50, 16, 'bullet.png')
 
-
-enemy1 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
-enemy2 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
-enemy3 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
-enemy4 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
-enemy5 = Enemy(random.randint(1, display_width), random.randint(1, display_height), 16, 'qmark.png')
+enemy1 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
+enemy2 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
+enemy3 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
+enemy4 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
+enemy5 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
 
 enemies_group = enemy1, enemy2, enemy3, enemy4, enemy5
+
+#win = Message(False)
+#win.message_display("WINNER!\nPRESS ESC TO EXIT")
+counter = Message(True)
 
 is_running = True
 
 clock = pygame.time.Clock()
 
-show_message = True
+#show_message = True
 pygame.mixer.music.load('spark_man.wav')
 pygame.mixer.music.play(-1)
 # the game is running
@@ -190,14 +197,21 @@ while is_running:
     screen.blit(space, (0, 0))
     bullet_sprite.render(screen)
     player_sprite.render(screen)
+
     enemy1.update()
     enemy2.update()
     enemy3.update()
     enemy4.update()
     enemy5.update()
-    print(enemies)
+
+    counter.message_display(str(enemies), 0.9, 0.1)
+
     if enemies == 0:
-        message_display("Winner!")
+        win = Message(False)
+        win.message_display("WINNER!", 0.5, 0.3)
+        win.message_display("PRESS ESC", 0.5, 0.6)
+        win.message_display("TO EXIT", 0.5, 0.75)
+
     pygame.display.update()
     clock.tick(60)
 
