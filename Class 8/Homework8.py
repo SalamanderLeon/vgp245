@@ -57,7 +57,6 @@ class Sprite:
 
 enemies = 0
 
-
 class Enemy(Sprite):
     def __init__(self, x, y, radius, img):
         global enemies
@@ -65,23 +64,29 @@ class Enemy(Sprite):
         self.y = y
         self.radius = radius
         self.img = pygame.image.load(img)
+        self.alive = True
         enemies += 1
 
-    show = True
-    dead = 0
-
-    def update(self):
-        global enemies
-        if self.show:
+    def update(self, screen):
+        if self.alive:
             self.render(screen)
-        if self.dead == 0 and self.show is False:
-            enemies -= 1
-            self.dead = 1
 
+    def killed(self):
+        global enemies
+        enemies -= 1
+        self.alive = False
+        print('enemy killed')
 
 class Player(Sprite):
     direction = 'down'
     bullet_direction = 'down'
+
+    def __init__(self, x, y, radius):
+        self.left_img = pygame.image.load("interceptor_left.png")
+        self.right_img = pygame.image.load("interceptor_right.png")
+        self.up_img = pygame.image.load("interceptor_up.png")
+        self.down_img = pygame.image.load("interceptor_down.png")
+        super().__init__(x, y, radius, "interceptor_down.png")
 
     def shoot(self):
         blast = pygame.mixer.Sound('blast.wav')
@@ -92,14 +97,13 @@ class Player(Sprite):
 
     def update(self):
         if self.direction == 'down':
-            self.img = pygame.image.load("interceptor_down.png")
+            self.img = self.down_img
         elif self.direction == 'up':
-            self.img = pygame.image.load("interceptor_up.png")
+            self.img = self.up_img
         elif self.direction == 'right':
-            self.img = pygame.image.load("interceptor_right.png")
+            self.img = self.right_img
         elif self.direction == 'left':
-            self.img = pygame.image.load("interceptor_left.png")
-
+            self.img = self.left_img
 
 # the game
 pygame.init()
@@ -122,16 +126,14 @@ x = display_width * 0.5
 otherx = 50
 othery = 100
 
-player_sprite = Player(x, y, 16, 'interceptor_down.png')
+player_sprite = Player(x, y, 16)
 bullet_sprite = Sprite(-50, -50, 16, 'bullet.png')
 
-enemy1 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
-enemy2 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
-enemy3 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
-enemy4 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
-enemy5 = Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png')
+enemy_count = 1000
 
-enemies_group = enemy1, enemy2, enemy3, enemy4, enemy5
+enemies_group = []
+for i in range(enemy_count):
+    enemies_group.append(Enemy(random.randint(1, display_width - 16), random.randint(1, display_height - 16), 16, 'qmark.png'))
 
 #win = Message(False)
 #win.message_display("WINNER!\nPRESS ESC TO EXIT")
@@ -189,20 +191,17 @@ while is_running:
     player_sprite.y = max(player_sprite.y, 0)
     player_sprite.y = min(player_sprite.y, display_height - (player_sprite.radius * 2))
 
-    for k in range(5):
-        if check_collision(bullet_sprite, enemies_group[k]):
-            enemies_group[k].show = False
-
     screen.fill(black)
     screen.blit(space, (0, 0))
+
+    for enemy in enemies_group:
+        enemy.update(screen)
+        if enemy.alive and check_collision(bullet_sprite, enemy):
+            print('got hit')
+            enemy.killed()
+
     bullet_sprite.render(screen)
     player_sprite.render(screen)
-
-    enemy1.update()
-    enemy2.update()
-    enemy3.update()
-    enemy4.update()
-    enemy5.update()
 
     counter.message_display(str(enemies), 0.9, 0.1)
 
